@@ -1,0 +1,1 @@
+spark-submit --master yarn --jars /opt/cloudera/parcels/CDH-6.0.0-1.cdh6.0.0.p0.537114/jars/kudu-spark2_2.11-1.6.0-cdh6.0.0.jar --packages org.apache.spark:spark-streaming-kafka_2.11:1.6.0 iot_demo.py
