@@ -15,7 +15,11 @@ This is a demonstration showing how to use Spark/Spark Streaming to read from Ka
 - Kafka 2.0.2-1.2.0.2.p0.5
 - Kudu 0.10.0-1.kudu0.10.0.p0.7 
 - Impala_Kudu 2.6.0-1.cdh5.8.0.p0.17
-
+##### New Versions
+- CDH 6.0
+- Kafka 1.0.0+cdh6.0.0
+- Kudu 1.6.0+cdh6.0.0
+- Impala 3.0.0+cdh6.0.0
 ##### Python Dependencies
 ```
 sudo pip install sseclient
@@ -42,6 +46,24 @@ TBLPROPERTIES(
  'kudu.num_tablet_replicas' = '3'
 );
 ```
+### New Version SQL
+```
+CREATE TABLE `particle_test` (
+`coreid` STRING,
+`published_at` STRING,
+`data` STRING,
+`event` STRING,
+`ttl` BIGINT,
+PRIMARY KEY (coreid,published_at)
+)
+PARTITION BY HASH (coreid) PARTITIONS 16
+STORED AS KUDU
+TBLPROPERTIES(
+ 'storage_handler' = 'com.cloudera.kudu.hive.KuduStorageHandler',
+ 'kudu.master_addresses' = 'testforcdh6-1.vpc.cloudera.com:7051,testforcdh6-2.vpc.cloudera.com:7051',
+ 'kudu.num_tablet_replicas' = '3'
+);
+```
 ```
 CREATE TABLE `particle_counts_last_20_data` (
 `data_word` STRING,
@@ -53,6 +75,21 @@ TBLPROPERTIES(
  'kudu.table_name' = 'particle_counts_last_20_data',
  'kudu.master_addresses' = 'ip-10-0-0-224.ec2.internal:7051',
  'kudu.key_columns' = 'data_word',
+ 'kudu.num_tablet_replicas' = '3'
+);
+```
+### New Version SQL
+```
+CREATE TABLE `particle_counts_last_20_data` (
+`data_word` STRING,
+`count` BIGINT,
+PRIMARY KEY (data_word)
+)
+PARTITION BY HASH (data_word) PARTITIONS 16 
+STORED AS KUDU
+TBLPROPERTIES(
+ 'storage_handler' = 'com.cloudera.kudu.hive.KuduStorageHandler',
+ 'kudu.master_addresses' = 'testforcdh6-1.vpc.cloudera.com:7051,testforcdh6-2.vpc.cloudera.com:7051',
  'kudu.num_tablet_replicas' = '3'
 );
 ```
@@ -70,6 +107,21 @@ TBLPROPERTIES(
  'kudu.num_tablet_replicas' = '3'
 );
 ```
+### New Version SQL
+```
+CREATE TABLE `particle_counts_last_20` (
+`event_word` STRING,
+`count` BIGINT,
+PRIMARY KEY (event_word)
+)
+PARTITION BY HASH (event_word) PARTITIONS 16
+STORED AS KUDU
+TBLPROPERTIES(
+ 'storage_handler' = 'com.cloudera.kudu.hive.KuduStorageHandler',
+ 'kudu.master_addresses' = 'testforcdh6-1.vpc.cloudera.com:7051,testforcdh6-2.vpc.cloudera.com:7051',
+ 'kudu.num_tablet_replicas' = '3'
+);
+```
 ```
 CREATE TABLE `particle_counts_total` (
 `event_word` STRING,
@@ -81,6 +133,21 @@ TBLPROPERTIES(
  'kudu.table_name' = 'particle_counts_total',
  'kudu.master_addresses' = 'ip-10-0-0-224.ec2.internal:7051',
  'kudu.key_columns' = 'event_word',
+ 'kudu.num_tablet_replicas' = '3'
+);
+```
+### New Version SQL
+```
+CREATE TABLE `particle_counts_total` (
+`event_word` STRING,
+`count` BIGINT,
+PRIMARY KEY (event_word)
+)
+PARTITION BY HASH (event_word) PARTITIONS 16
+STORED AS KUDU
+TBLPROPERTIES(
+ 'storage_handler' = 'com.cloudera.kudu.hive.KuduStorageHandler',
+ 'kudu.master_addresses' = 'testforcdh6-1.vpc.cloudera.com:7051,testforcdh6-2.vpc.cloudera.com:7051',
  'kudu.num_tablet_replicas' = '3'
 );
 ```
@@ -98,20 +165,39 @@ TBLPROPERTIES(
  'kudu.num_tablet_replicas' = '3'
 );
 ```
+### New Version SQL
+```
+CREATE TABLE `particle_counts_total_data` (
+`data_word` STRING,
+`count` BIGINT,
+PRIMARY KEY (data_word)
+)
+PARTITION BY HASH (data_word) PARTITIONS 16
+STORED AS KUDU
+TBLPROPERTIES(
+ 'storage_handler' = 'com.cloudera.kudu.hive.KuduStorageHandler',
+ 'kudu.master_addresses' = 'testforcdh6-1.vpc.cloudera.com:7051,testforcdh6-2.vpc.cloudera.com:7051',
+ 'kudu.num_tablet_replicas' = '3'
+);
+```
 
 Kafka create topic:
 ```
 kafka-topics --create --zookeeper  ip-10-0-0-224.ec2.internal:2181 --replication-factor 1 --partitions 1 --topic particle
 ```
+python producer:
+```
+python particlespark.py
+```
 
 spark-submit:
 ```
 spark-submit --master yarn --jars kudu-spark_2.10-0.10.0.jar --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 iot_demo.py
+
+New Version
+spark-submit --master yarn --jars /opt/cloudera/parcels/CDH-6.0.0-1.cdh6.0.0.p0.537114/jars/kudu-spark2_2.11-1.6.0-cdh6.0.0.jar --packages org.apache.spark:spark-streaming-kafka_2.11:1.6.0 total_event_count.py
+
 spark-submit --master yarn --jars kudu-spark_2.10-0.10.0.jar --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 event_count.py
 spark-submit --master yarn --jars kudu-spark_2.10-0.10.0.jar --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 data_count.py
 spark-submit --master yarn --jars kudu-spark_2.10-0.10.0.jar --packages org.apache.spark:spark-streaming-kafka_2.10:1.6.0 total_event_count.py
-```
-python producer:
-```
-python particlespark.py
 ```
